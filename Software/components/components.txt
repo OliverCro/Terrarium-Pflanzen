@@ -1,0 +1,6 @@
+Bluetooth/Wifi
+I2C
+SPI
+GPIO
+LittleFS
+etc...
