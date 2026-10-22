@@ -1,0 +1,95 @@
+<mxfile host="app.diagrams.net" pages="2">
+  <diagram name="Systemsteuerung" id="f1zh19loUSvu2um-1Sbd">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="63aKy39muMlAB-oJ1O3E-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;strokeColor=#33FF33;" value="" vertex="1">
+          <mxGeometry height="340" width="500" x="190" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-2" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;rounded=0;fontFamily=Courier New;labelBackgroundColor=default;labelBorderColor=default;" value="&lt;div&gt;Systemsteuerung (Messen/Steuern)&lt;/div&gt;&lt;div&gt;- dezentral, autonom&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="250" x="215" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-7" edge="1" parent="1" source="63aKy39muMlAB-oJ1O3E-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="63aKy39muMlAB-oJ1O3E-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hyd-xjPcCstmm_rp0JDZ-2" connectable="0" parent="63aKy39muMlAB-oJ1O3E-7" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="GPIO" vertex="1">
+          <mxGeometry relative="1" x="0.5717" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-8" edge="1" parent="1" source="63aKy39muMlAB-oJ1O3E-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="63aKy39muMlAB-oJ1O3E-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hyd-xjPcCstmm_rp0JDZ-1" connectable="0" parent="63aKy39muMlAB-oJ1O3E-8" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="PWM" vertex="1">
+          <mxGeometry relative="1" x="0.6934" y="-2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-9" edge="1" parent="1" source="63aKy39muMlAB-oJ1O3E-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="63aKy39muMlAB-oJ1O3E-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="hyd-xjPcCstmm_rp0JDZ-3" connectable="0" parent="63aKy39muMlAB-oJ1O3E-9" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="PWM" vertex="1">
+          <mxGeometry relative="1" x="0.7765" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-15" edge="1" parent="1" source="63aKy39muMlAB-oJ1O3E-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;endArrow=none;endFill=0;" target="63aKy39muMlAB-oJ1O3E-10">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="325" y="260" />
+              <mxPoint x="325" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fontFamily=Courier New;" value="MCU/Host" vertex="1">
+          <mxGeometry height="70" width="140" x="255" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fontFamily=Courier New;" value="Wärmestrahler" vertex="1">
+          <mxGeometry height="50" width="100" x="520" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fontFamily=Courier New;" value="Bewässerungspumpe" vertex="1">
+          <mxGeometry height="50" width="150" x="520" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fontFamily=Courier New;" value="Lüfter/Kühlung" vertex="1">
+          <mxGeometry height="40" width="120" x="520" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;strokeColor=#33FF33;" value="" vertex="1">
+          <mxGeometry height="180" width="190" x="230" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-11" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;rounded=0;fontFamily=Courier New;labelBackgroundColor=default;labelBorderColor=default;" value="I2C - Bus" vertex="1">
+          <mxGeometry height="10" width="75" x="240" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fontFamily=Courier New;" value="Luft-Temp &amp;amp; Feuchte" vertex="1">
+          <mxGeometry height="40" width="120" x="265" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fontFamily=Courier New;" value="Bodenfeuchte-Sensor" vertex="1">
+          <mxGeometry height="40" width="120" x="265" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="63aKy39muMlAB-oJ1O3E-14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;fontFamily=Courier New;" value="LED" vertex="1">
+          <mxGeometry height="40" width="120" x="265" y="390" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="02T-9b3sRIanO8qvCZsm" name="Konfiguration">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="AWN3BAy5xtyGTDWHDQ5x-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;roundedPerimeter=1;strokeColor=#33FF33;" value="" vertex="1">
+          <mxGeometry height="180" width="205" x="175" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="AWN3BAy5xtyGTDWHDQ5x-2" parent="1" style="text;html=1;whiteSpace=wrap;align=center;verticalAlign=middle;rounded=0;fontFamily=Courier New;labelBackgroundColor=default;labelBorderColor=default;" value="&lt;div&gt;Überwachung&lt;/div&gt;&lt;div&gt;&amp;amp; Konfiguration&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="250" x="152.5" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="2B2tobCd4JU-Ra3hqbbX-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div&gt;Web-Dashboard&lt;/div&gt;&lt;div&gt;Live-Werte / EInstellungen&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="150" x="200" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="2B2tobCd4JU-Ra3hqbbX-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Datenlogger / MCU" vertex="1">
+          <mxGeometry height="60" width="150" x="200" y="440" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
