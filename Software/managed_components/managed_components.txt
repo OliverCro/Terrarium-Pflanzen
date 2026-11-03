@@ -1,0 +1,1 @@
+Components downloaded by the IDF Component Manager based on main/idf_component.yml

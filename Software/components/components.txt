@@ -1,3 +1,4 @@
+Project's local components (Self written)
 Bluetooth/Wifi
 I2C
 SPI
