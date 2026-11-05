@@ -6,12 +6,21 @@
 #include "chat_store.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
+#include "lwip/sockets.h"
 
 #define TAG "http_server"
 
 #define HTTP_MAX_OPEN_SOCKETS 12
 #define HTTP_SERVER_STACK_SIZE 8192
+/* Keep the single httpd task responsive: a stalled client must not block the
+ * captive portal for the default 5 seconds. */
+#define HTTP_SEND_TIMEOUT_S 1
+#define HTTP_RECV_TIMEOUT_S 2
+#define HTTP_KEEPALIVE_IDLE_S 30
+#define HTTP_KEEPALIVE_INTERVAL_S 5
+#define HTTP_KEEPALIVE_COUNT 3
 #define WS_MAX_PAYLOAD 1024
+#define WS_DISCARD_CHUNK 128
 #define WS_MAX_CLIENTS 16
 
 /* Embedded web assets (see EMBED_TXTFILES in main/CMakeLists.txt). */
@@ -49,7 +58,7 @@ static esp_err_t style_css_get_handler(httpd_req_t *req)
     return send_embedded(req, "text/css; charset=utf-8", style_css_start);
 }
 
-static esp_err_t not_found_handler(httpd_req_t *req)
+static esp_err_t captive_redirect_handler(httpd_req_t *req)
 {
     httpd_resp_set_status(req, "302 Found");
     httpd_resp_set_hdr(req, "Location", "/");
@@ -65,6 +74,28 @@ static esp_err_t ws_send_json(httpd_req_t *req, const char *json)
     };
 
     return httpd_ws_send_frame(req, &frame);
+}
+
+/* Consume and throw away a frame that is too large for us. Leaving the bytes
+ * unread desynchronises the WebSocket stream, so the socket can never be used
+ * again afterwards. The scratch buffer is owned by the caller so the frame
+ * never keeps a pointer to a dead stack frame. */
+static esp_err_t ws_discard_payload(httpd_req_t *req, httpd_ws_frame_t *frame,
+                                    uint8_t *scratch, size_t scratch_size)
+{
+    frame->payload = scratch;
+    while (frame->left_len > 0) {
+        size_t chunk = frame->left_len < scratch_size
+                           ? frame->left_len
+                           : scratch_size;
+
+        esp_err_t err = httpd_ws_recv_frame_part(req, frame, chunk);
+        if (err != ESP_OK) {
+            return err;
+        }
+    }
+
+    return ESP_OK;
 }
 
 static esp_err_t ws_handler(httpd_req_t *req)
@@ -99,7 +130,8 @@ static esp_err_t ws_handler(httpd_req_t *req)
     if (frame.len > WS_MAX_PAYLOAD) {
         ESP_LOGW(TAG, "dropping oversized WebSocket frame (%u bytes)",
                  (unsigned)frame.len);
-        return ESP_OK;
+        uint8_t scratch[WS_DISCARD_CHUNK];
+        return ws_discard_payload(req, &frame, scratch, sizeof(scratch));
     }
 
     uint8_t *payload = malloc(frame.len + 1);
@@ -127,6 +159,21 @@ static esp_err_t ws_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+/* Check without blocking whether a WebSocket client can accept data. A client
+ * whose TCP send buffer is full (asleep phone, gone Chromebook, ...) would
+ * otherwise stall the httpd task for the whole send timeout. */
+static bool ws_client_writable(int fd)
+{
+    fd_set write_fds;
+    FD_ZERO(&write_fds);
+    FD_SET(fd, &write_fds);
+
+    struct timeval timeout = {.tv_sec = 0, .tv_usec = 0};
+    int ret = select(fd + 1, NULL, &write_fds, NULL, &timeout);
+
+    return ret > 0 && FD_ISSET(fd, &write_fds);
+}
+
 static void broadcast_work(void *arg)
 {
     broadcast_work_t *work = (broadcast_work_t *)arg;
@@ -142,16 +189,29 @@ static void broadcast_work(void *arg)
     if (httpd_get_client_list(work->server, &client_count, client_fds) ==
         ESP_OK) {
         for (size_t i = 0; i < client_count; i++) {
-            if (httpd_ws_get_fd_info(work->server, client_fds[i]) !=
+            int fd = client_fds[i];
+
+            if (httpd_ws_get_fd_info(work->server, fd) !=
                 HTTPD_WS_CLIENT_WEBSOCKET) {
                 continue;
             }
 
+            if (!ws_client_writable(fd)) {
+                ESP_LOGW(TAG, "client fd %d is not reading, skipping message",
+                         fd);
+                continue;
+            }
+
             esp_err_t err =
-                httpd_ws_send_frame_async(work->server, client_fds[i], &frame);
+                httpd_ws_send_frame_async(work->server, fd, &frame);
             if (err != ESP_OK) {
-                ESP_LOGD(TAG, "send to fd %d failed: %s", client_fds[i],
+                ESP_LOGW(TAG, "send to fd %d failed: %s, closing session", fd,
                          esp_err_to_name(err));
+                /* Make sure the LRU bookkeeping does not classify this as a
+                 * zeroed, already-reused slot, then close it from the work
+                 * queue (httpd tasks must not delete sessions directly). */
+                httpd_sess_update_lru_counter(work->server, fd);
+                httpd_sess_trigger_close(work->server, fd);
             }
         }
     }
@@ -213,8 +273,8 @@ static const httpd_uri_t s_uris[] = {
     },
     {
         .uri = "/*",
-        .method = HTTP_GET,
-        .handler = not_found_handler,
+        .method = HTTP_ANY,
+        .handler = captive_redirect_handler,
     },
 };
 
@@ -226,6 +286,12 @@ esp_err_t http_server_start(void)
     config.backlog_conn = 8;
     config.stack_size = HTTP_SERVER_STACK_SIZE;
     config.uri_match_fn = httpd_uri_match_wildcard;
+    config.send_wait_timeout = HTTP_SEND_TIMEOUT_S;
+    config.recv_wait_timeout = HTTP_RECV_TIMEOUT_S;
+    config.keep_alive_enable = true;
+    config.keep_alive_idle = HTTP_KEEPALIVE_IDLE_S;
+    config.keep_alive_interval = HTTP_KEEPALIVE_INTERVAL_S;
+    config.keep_alive_count = HTTP_KEEPALIVE_COUNT;
 
     esp_err_t err = httpd_start(&s_server, &config);
     if (err != ESP_OK) {
