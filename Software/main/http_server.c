@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "chat_store.h"
+#include "terrarium_state.h"
 #include "esp_http_server.h"
 #include "esp_log.h"
 #include "lwip/sockets.h"
@@ -102,14 +102,14 @@ static esp_err_t ws_handler(httpd_req_t *req)
 {
     /* A GET here means the WebSocket handshake just completed. */
     if (req->method == HTTP_GET) {
-        char *history = chat_history_json();
-        if (history != NULL) {
-            esp_err_t err = ws_send_json(req, history);
+        char *state = terrarium_state_json();
+        if (state != NULL) {
+            esp_err_t err = ws_send_json(req, state);
             if (err != ESP_OK) {
-                ESP_LOGW(TAG, "failed to send history: %s",
+                ESP_LOGW(TAG, "failed to send state: %s",
                          esp_err_to_name(err));
             }
-            free(history);
+            free(state);
         }
         return ESP_OK;
     }
@@ -148,10 +148,10 @@ static esp_err_t ws_handler(httpd_req_t *req)
     payload[frame.len] = '\0';
 
     if (frame.type == HTTPD_WS_TYPE_TEXT) {
-        char *message = chat_handle_client_json((const char *)payload);
-        if (message != NULL) {
-            http_server_broadcast_text(message);
-            free(message);
+        char *state = terrarium_state_handle_client_json((const char *)payload);
+        if (state != NULL) {
+            http_server_broadcast_text(state);
+            free(state);
         }
     }
 

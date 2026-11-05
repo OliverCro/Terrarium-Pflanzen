@@ -1,24 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
-    <title>ESP32 Chat</title>
+    <title>Terrarium</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="app">
-        <h2>
-            Chatroom
-            <button id="themeToggle">🌙</button>
-        </h2>
+        <header>
+            <h1>Terrarium</h1>
+            <span id="status" class="status offline">getrennt</span>
+        </header>
 
-        <div id="chat"></div>
+        <section class="sensors">
+            <div class="sensor">
+                <span class="sensor-label">Temperatur</span>
+                <span class="sensor-value">
+                    <span id="temperature">--</span><small>°C</small>
+                </span>
+            </div>
+            <div class="sensor">
+                <span class="sensor-label">Feuchtigkeit</span>
+                <span class="sensor-value">
+                    <span id="humidity">--</span><small>%</small>
+                </span>
+            </div>
+        </section>
 
-        <div id="inputBar">
-            <input id="msg" placeholder="Type a message...">
-            <button onclick="send()">Send</button>
-        </div>
+        <section class="controls">
+            <div class="control">
+                <div class="control-header">
+                    <label for="heater">Heizintensität</label>
+                    <output id="heaterValue" for="heater">0 %</output>
+                </div>
+                <input id="heater" type="range" min="0" max="100" step="1" value="0">
+            </div>
+
+            <div class="control">
+                <div class="control-header">
+                    <label for="fan">Lüfter</label>
+                    <output id="fanValue" for="fan">0 %</output>
+                </div>
+                <input id="fan" type="range" min="0" max="100" step="1" value="0">
+            </div>
+
+            <div class="control">
+                <div class="control-header">
+                    <label for="pump">Pumpe</label>
+                    <output id="pumpValue" for="pump">Aus</output>
+                </div>
+                <label class="switch">
+                    <input id="pump" type="checkbox" role="switch">
+                    <span class="switch-track"></span>
+                </label>
+            </div>
+
+            <div class="control">
+                <div class="control-header">
+                    <label for="lamp">Lampe Helligkeit</label>
+                    <output id="lampValue" for="lamp">0 %</output>
+                </div>
+                <input id="lamp" type="range" min="0" max="100" step="1" value="0">
+            </div>
+        </section>
     </div>
 
     <script src="app.js"></script>

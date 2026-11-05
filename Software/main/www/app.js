@@ -2,80 +2,98 @@ let ws = null;
 let reconnectTimer = null;
 let reconnectDelay = 500;
 
-let chat = document.getElementById("chat");
-let clientId = localStorage.getItem("clientId");
-let toggleBtn = document.getElementById("themeToggle");
+let updateTimer = null;
+let pending = {};
 
-function generateId() {
-    return 'xxxxxxx'.replace(/[x]/g, () =>
-    (Math.random() * 16 | 0).toString(16)
-    ) + Date.now().toString(16);
-}
+const statusEl = document.getElementById("status");
+const temperatureEl = document.getElementById("temperature");
+const humidityEl = document.getElementById("humidity");
 
-if (!clientId) {
-    clientId = generateId();
-    localStorage.setItem("clientId", clientId);
-}
-
-document.getElementById("msg").addEventListener("keydown", function (e) {
-    if (e.key === "Enter") {
-        send();
-    }
-});
-
-// load saved theme
-let darkMode = localStorage.getItem("darkMode") === "true";
-
-if (darkMode) {
-    document.body.classList.add("dark");
-    toggleBtn.textContent = "☀️";
-}
-
-// toggle click
-toggleBtn.onclick = () => {
-    document.body.classList.toggle("dark");
-
-    let isDark = document.body.classList.contains("dark");
-    localStorage.setItem("darkMode", isDark);
-
-    toggleBtn.textContent = isDark ? "☀️" : "🌙";
+const sliders = {
+    heater: document.getElementById("heater"),
+    fan: document.getElementById("fan"),
+    lamp: document.getElementById("lamp"),
 };
 
-function renderMessage(m) {
-    let div = document.createElement("div");
-    let isMe = (m.id === clientId);
+const outputs = {
+    heater: document.getElementById("heaterValue"),
+    fan: document.getElementById("fanValue"),
+    lamp: document.getElementById("lampValue"),
+    pump: document.getElementById("pumpValue"),
+};
 
-    div.className = "msg " + (isMe ? "me" : "other");
+const pumpEl = document.getElementById("pump");
 
-    // Build the nodes with textContent so user input is never parsed as HTML.
-    let user = document.createElement("b");
-    user.textContent = m.user || "";
-    div.appendChild(user);
-    div.appendChild(document.createElement("br"));
-    div.appendChild(document.createTextNode(m.text || ""));
+/* True while this client is operating a control. Remote updates for that
+ * control are ignored until the user lets go, otherwise an echoed state would
+ * yank the slider out from under their finger. */
+const active = {
+    heater: false,
+    fan: false,
+    lamp: false,
+    pump: false,
+};
 
-    chat.appendChild(div);
+function isControlActive(name) {
+    return active[name];
 }
 
-function handleMessage(event) {
-    let data;
+function clampLevel(value) {
+    let number = Number(value);
 
-    try {
-        data = JSON.parse(event.data);
-    } catch (e) {
-        return; // ignore malformed frames instead of breaking the handler
+    if (!Number.isFinite(number)) return 0;
+
+    return Math.max(0, Math.min(100, Math.round(number)));
+}
+
+function formatSensor(value) {
+    return Number.isFinite(Number(value)) ? Number(value).toFixed(1) : "--";
+}
+
+function setSlider(name, value) {
+    let level = clampLevel(value);
+    let slider = sliders[name];
+
+    slider.value = level;
+    slider.style.setProperty("--fill", level + "%");
+    outputs[name].textContent = level + " %";
+}
+
+function setPump(value) {
+    let on = Number(value) >= 1;
+
+    pumpEl.checked = on;
+    outputs.pump.textContent = on ? "An" : "Aus";
+}
+
+function applyState(state) {
+    if (!state || typeof state !== "object" || Array.isArray(state)) return;
+
+    if (typeof state.heater === "number" && !isControlActive("heater")) {
+        setSlider("heater", state.heater);
+    }
+    if (typeof state.fan === "number" && !isControlActive("fan")) {
+        setSlider("fan", state.fan);
+    }
+    if (typeof state.lamp === "number" && !isControlActive("lamp")) {
+        setSlider("lamp", state.lamp);
+    }
+    if (typeof state.pump === "number" && !isControlActive("pump")) {
+        setPump(state.pump);
     }
 
-    // ARRAY = history
-    if (Array.isArray(data)) {
-        chat.innerHTML = "";
-        data.forEach(m => renderMessage(m));
-    } else {
-        // OBJECT = new message
-        renderMessage(data);
+    if (typeof state.temperature === "number") {
+        temperatureEl.textContent = formatSensor(state.temperature);
     }
+    if (typeof state.humidity === "number") {
+        humidityEl.textContent = formatSensor(state.humidity);
+    }
+}
 
-    chat.scrollTop = chat.scrollHeight;
+function setStatus(connected) {
+    statusEl.textContent = connected ? "verbunden" : "getrennt";
+    statusEl.classList.toggle("online", connected);
+    statusEl.classList.toggle("offline", !connected);
 }
 
 function scheduleReconnect() {
@@ -95,11 +113,23 @@ function connect() {
 
     ws.onopen = () => {
         reconnectDelay = 500;
+        setStatus(true);
     };
 
-    ws.onmessage = handleMessage;
+    ws.onmessage = (event) => {
+        let data;
+
+        try {
+            data = JSON.parse(event.data);
+        } catch (e) {
+            return;
+        }
+
+        applyState(data);
+    };
 
     ws.onclose = () => {
+        setStatus(false);
         scheduleReconnect();
     };
 
@@ -108,23 +138,59 @@ function connect() {
     };
 }
 
-connect();
+// Changes are batched briefly so dragging a slider does not flood the ESP32.
+function queuePatch(key, value) {
+    pending[key] = value;
 
-function send() {
-    let input = document.getElementById("msg");
-    let text = input.value.trim();
+    if (updateTimer !== null) return;
+    updateTimer = setTimeout(flushPatch, 100);
+}
 
-    if (text.length === 0) return;
+function flushPatch() {
+    updateTimer = null;
 
-    // Never call send() on a closed/connecting socket: it throws and would
-    // abort this function before the input is cleared.
+    let patch = pending;
+    pending = {};
+
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-    ws.send(JSON.stringify({
-        id: clientId,
-        text: text
-    }));
-
-    input.value = "";
-    input.focus();
+    ws.send(JSON.stringify(patch));
 }
+
+Object.keys(sliders).forEach((name) => {
+    sliders[name].addEventListener("input", () => {
+        let value = clampLevel(sliders[name].value);
+
+        setSlider(name, value);
+        queuePatch(name, value);
+    });
+
+    sliders[name].addEventListener("pointerdown", () => {
+        active[name] = true;
+    });
+});
+
+pumpEl.addEventListener("change", () => {
+    let value = pumpEl.checked ? 1 : 0;
+
+    setPump(value);
+    queuePatch("pump", value);
+});
+
+pumpEl.addEventListener("pointerdown", () => {
+    active.pump = true;
+});
+
+// Release anywhere (including outside the control) ends the local override.
+["pointerup", "pointercancel"].forEach((eventName) => {
+    window.addEventListener(eventName, () => {
+        Object.keys(active).forEach((name) => {
+            active[name] = false;
+        });
+    });
+});
+
+Object.keys(sliders).forEach((name) => setSlider(name, sliders[name].value));
+setPump(0);
+
+connect();

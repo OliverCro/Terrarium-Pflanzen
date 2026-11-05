@@ -1,4 +1,4 @@
-#include "chat_store.h"
+#include "terrarium_state.h"
 #include "dns_captive.h"
 #include "esp_err.h"
 #include "esp_event.h"
@@ -33,7 +33,7 @@ void app_main(void)
     esp_netif_t *ap_netif = NULL;
     ESP_ERROR_CHECK(wifi_ap_start(&ap_netif));
 
-    chat_store_init();
+    terrarium_state_init();
 
     esp_netif_ip_info_t ip_info;
     ESP_ERROR_CHECK(esp_netif_get_ip_info(ap_netif, &ip_info));
@@ -42,5 +42,5 @@ void app_main(void)
 
     ESP_ERROR_CHECK(http_server_start());
 
-    ESP_LOGI(TAG, "Chat room ready: http://" IPSTR, IP2STR(&ip_info.ip));
+    ESP_LOGI(TAG, "Terrarium ready: http://" IPSTR, IP2STR(&ip_info.ip));
 }

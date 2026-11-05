@@ -9,7 +9,7 @@
 
 #define TAG "wifi_ap"
 
-#define WIFI_AP_SSID "ESP32-Chat"
+#define WIFI_AP_SSID "Terrarium"
 #define WIFI_AP_PASSWORD "" /* open network, same as the Arduino sketch */
 #define WIFI_AP_CHANNEL 1
 #define WIFI_AP_MAX_CONNECTIONS 8
