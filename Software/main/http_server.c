@@ -149,8 +149,16 @@ static esp_err_t ws_handler(httpd_req_t *req)
 
     if (frame.type == HTTPD_WS_TYPE_TEXT) {
         char *state = terrarium_state_handle_client_json((const char *)payload);
+
+        // If the received State is not Null
         if (state != NULL) {
+            // ESP_Log
+            ESP_LOGI(TAG, "client update %s -> %s", (const char*)payload, state);
+
+            // Broadcast to all clients
             http_server_broadcast_text(state);
+
+
             free(state);
         }
     }
