@@ -1,1 +1,3 @@
 /Software/build
+*.kicad_prl
+*.lck
